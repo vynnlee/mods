@@ -12,13 +12,14 @@ You are halfway through a prompt and want to ask something else first. End it wi
 ```
 ❯ /drafts                                           │ Drafts                          ✕
                                                     │ [ Save prompt box ]
-Drafts  number keys  1: refactor the a…  2: write…  │ Press a number key or click a
-0: close                                            │ draft to put it in the prompt box.
+Drafts  number keys  1: refactor the a…  2: write…  │ Click a draft or press its
+0: close                                            │ number to put it in the prompt.
 ────────────────────────────────────────────────    │
 ❯                                                   │ 1  refactor the auth middleware…
-                                                    │    api, 3m ago, 61 chars  ×
-                                                    │ 2  write release notes for 2.4…
-                                                    │    web, 2h ago, 48 chars  ×
+                                                    │    keep the old cookie name for…
+                                                    │    3m ago, 61 chars  ×
+                                                    │ 2  write release notes for 2.4
+                                                    │    2h ago, 48 chars  ×
 ```
 
 ## Use
@@ -30,8 +31,10 @@ Drafts  number keys  1: refactor the a…  2: write…  │ Press a number key o
 | Put a draft back in the prompt box | `/drafts`, then press a number. Or `/drafts <n>` |
 | Save what is in the prompt box | Click **Save prompt box** in the sidebar (wide terminals) |
 | Delete a draft | Click `×` in the sidebar, or `/drafts rm <n>` |
+| Bring back the draft you just deleted | Click **Undo** in the sidebar, or `/drafts undo` |
 
-- Drafts are shared by every Claude Code session on your machine, newest first, up to 50. Each shows the project it was saved in. The list shows the newest 9.
+- Drafts belong to the session you save them in: another session never sees them, and resuming the session brings them back. Newest first, up to 50 per session; the drafts of a session left alone for 30 days are dropped.
+- The sidebar shows up to three lines of each draft, so a long prompt is easy to recognise.
 - Putting a draft in a prompt box that already holds other text saves that text as a draft first, so nothing you typed is lost.
 - Saving the same text again moves it to the top instead of keeping two copies.
 - `/drafts` fits the terminal:
@@ -67,8 +70,8 @@ claude --plugin-dir ./prompt-drafts
 `claude plugin validate .` lists everything the mod calls:
 
 - `$.prompt.read`, `$.prompt.fill`: read and fill the prompt box
-- `$.store.get`, `$.store.set`: keep drafts in the plugin's own store on your machine
-- `$.session.root`: the project name shown next to each draft
+- `$.store.get`, `$.store.set`, `$.store.delete`, `$.store.keys`: keep each session's drafts in the plugin's own store on your machine, and drop sessions idle for 30 days
+- `$.session.id`: which session the drafts belong to
 - `$.command.register`, `$.ui.ask` (the question dialog), `$.ui.open`, `$.ui.close`, `$.ui.panes`, `$.ui.toast`, `$.clock.now`, `$.session.surface`, state for the sidebar and the number row
 
 No network requests, no processes, no files outside the plugin store. Only prompts you type yourself are checked for the marker; prompts that other plugins or sessions submit pass through untouched.
