@@ -1,0 +1,31 @@
+{
+  "name": "prompt-drafts",
+  "version": "0.1.0",
+  "description": "Keep prompts aside as drafts of the session. End a prompt with ;; to save it instead of sending it, then /drafts to put one back in the prompt box.",
+  "author": {
+    "name": "Seongbeen Lee",
+    "url": "https://github.com/vynnlee"
+  },
+  "homepage": "https://github.com/vynnlee/prompt-drafts",
+  "repository": "https://github.com/vynnlee/prompt-drafts",
+  "license": "MIT",
+  "keywords": [
+    "claude-code-mod",
+    "prompt",
+    "drafts",
+    "productivity"
+  ],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language",
+      "description": "Language of messages and the drafts pane",
+      "options": [
+        "en",
+        "ko"
+      ],
+      "default": "en"
+    }
+  }
+}
