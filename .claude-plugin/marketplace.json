@@ -1,0 +1,6 @@
+{
+  "name": "prompt-drafts",
+  "owner": { "name": "Seongbeen Lee" },
+  "description": "prompt-drafts, a Claude Code mod",
+  "plugins": [{ "name": "prompt-drafts", "source": "./", "description": "Keep prompts aside as drafts and bring them back later." }]
+}

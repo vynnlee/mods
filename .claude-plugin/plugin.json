@@ -1,0 +1,13 @@
+{
+  "name": "prompt-drafts",
+  "version": "0.1.0",
+  "description": "Keep prompts aside as drafts and bring them back later: end a prompt with ;; to save it, /drafts to pick one.",
+  "author": { "name": "Seongbeen Lee" },
+  "license": "MIT",
+  "keywords": ["claude-code-mod", "prompt", "drafts", "productivity"],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": { "type": "string", "title": "Language", "description": "Language of messages and the drafts pane", "options": ["en", "ko"], "default": "en" },
+    "marker": { "type": "string", "title": "Save marker", "description": "A prompt that ends with this is saved as a draft instead of sent", "default": ";;" }
+  }
+}
