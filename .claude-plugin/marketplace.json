@@ -1,0 +1,17 @@
+{
+  "name": "vynnlee",
+  "owner": {
+    "name": "Seongbeen Lee",
+    "url": "https://github.com/vynnlee"
+  },
+  "description": "Claude Code mods by vynnlee.",
+  "plugins": [
+    {
+      "name": "prompt-drafts",
+      "source": "./prompt-drafts",
+      "description": "End a prompt with ;; to keep it as a draft of the session, /drafts to put it back in the prompt box.",
+      "homepage": "https://github.com/vynnlee/mods/tree/main/prompt-drafts",
+      "license": "MIT"
+    }
+  ]
+}

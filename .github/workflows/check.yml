@@ -1,0 +1,43 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  mods:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: list
+        run: echo "list=$(jq -c '[.plugins[].source | ltrimstr("./")]' .claude-plugin/marketplace.json)" >> "$GITHUB_OUTPUT"
+
+  marketplace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code
+      - run: claude plugin validate . --strict
+
+  check:
+    needs: mods
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mod: ${{ fromJson(needs.mods.outputs.list) }}
+        claude-code: ["2.1.292", "latest"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code@${{ matrix.claude-code }}
+      - run: claude plugin validate ${{ matrix.mod }} --strict
+      - run: claude plugin test ${{ matrix.mod }}

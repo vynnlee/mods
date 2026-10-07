@@ -1,8 +1,8 @@
 # prompt-drafts
 
-[![check](https://github.com/vynnlee/prompt-drafts/actions/workflows/check.yml/badge.svg)](https://github.com/vynnlee/prompt-drafts/actions/workflows/check.yml)
+[![check](https://github.com/vynnlee/mods/actions/workflows/check.yml/badge.svg)](https://github.com/vynnlee/mods/actions/workflows/check.yml)
 [![Claude Code 2.1.287+](https://img.shields.io/badge/Claude%20Code-2.1.287%2B-d97757)](https://code.claude.com/docs/en/plugins/mods/overview)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](../LICENSE)
 
 A [Claude Code mod](https://code.claude.com/docs/en/plugins/mods/overview) that keeps prompts aside as drafts and puts them back in the prompt box when you need them.
 
@@ -31,21 +31,21 @@ Drafts  number keys  1: refactor the a…  2: write…  │ Click a draft or pre
 Requires Claude Code 2.1.287 or later. Mods are on by default.
 
 ```bash
-claude plugin marketplace add vynnlee/prompt-drafts
-claude plugin install prompt-drafts@prompt-drafts
+claude plugin marketplace add vynnlee/mods
+claude plugin install prompt-drafts@vynnlee
 ```
 
 Or in a Claude Code session:
 
 ```
-/plugin install prompt-drafts --marketplace vynnlee/prompt-drafts
+/plugin install prompt-drafts --marketplace vynnlee/mods
 ```
 
 To try it for one session without installing:
 
 ```bash
-git clone https://github.com/vynnlee/prompt-drafts
-claude --plugin-dir ./prompt-drafts
+git clone https://github.com/vynnlee/mods
+claude --plugin-dir ./mods/prompt-drafts
 ```
 
 ## Usage
@@ -76,7 +76,7 @@ claude --plugin-dir ./prompt-drafts
 ## Settings
 
 ```
-/plugin configure prompt-drafts@prompt-drafts
+/plugin configure prompt-drafts@vynnlee
 ```
 
 | Setting | Default | Values |
@@ -86,7 +86,7 @@ claude --plugin-dir ./prompt-drafts
 ## Update
 
 ```bash
-claude plugin update prompt-drafts@prompt-drafts
+claude plugin update prompt-drafts@vynnlee
 ```
 
 Third party marketplaces do not update on their own unless you turn on auto update in `/plugin` under Marketplaces.
@@ -109,6 +109,7 @@ Third party marketplaces do not update on their own unless you turn on auto upda
 ## Development
 
 ```bash
+cd prompt-drafts
 claude plugin validate . --strict
 claude plugin test .
 claude --plugin-dir .
@@ -118,4 +119,4 @@ The pure logic (titles, previews, paging, messages) is in `hooks/drafts.ts` and 
 
 ## License
 
-[MIT](LICENSE)
+[MIT](../LICENSE)
