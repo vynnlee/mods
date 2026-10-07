@@ -8,11 +8,13 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 import type { Draft } from '../types'
-import { add, ago, listText, MARKER, marked, project, text, title, type Lang } from './drafts'
+import { add, ago, askPage, listText, MARKER, marked, project, text, title, type Lang } from './drafts'
 
 const KEY = 'drafts'
 const PANE = 'prompt-drafts'
 const SHOWN = 9
+// Below this many columns there is no room for the sidebar: the draft is picked in Claude Code's own question dialog.
+const WIDE = 110
 const drafts = atom({ plugin: 'prompt-drafts', key: 'drafts' } as const, [])
 const isPicking = atom({ plugin: 'prompt-drafts', key: 'isPicking' } as const, false)
 
@@ -70,6 +72,24 @@ async function saveBox($: EngineInterface) {
   $.ui.toast(text[lang].saved(1, title(body)))
 }
 
+// Narrow terminals: Claude Code's own question dialog, a page at a time (it takes 2-4 options).
+async function askPick($: EngineInterface, list: Draft[]) {
+  const t = text[lang]
+  let start = 0
+  for (;;) {
+    const { page, labels, hasMore, next } = askPage(list, start)
+    let answer: string
+    try {
+      answer = await $.ui.ask(t.ask, { header: t.picker, options: hasMore ? [...labels, t.more(Math.min(3, list.length - next))] : labels.length > 1 ? labels : [...labels, t.close] })
+    } catch {
+      return null // dismissed
+    }
+    if (hasMore && answer === t.more(Math.min(3, list.length - next))) { start = next; continue }
+    const i = labels.indexOf(answer)
+    return i >= 0 ? page[i]! : null
+  }
+}
+
 // The sidebar shows when it has room; the number row above the prompt is what the keys reach either way.
 async function paneShown($: EngineInterface) {
   return (await $.ui.panes()).some(p => p.id === PANE && p.isPlaced && p.isShown)
@@ -112,6 +132,11 @@ export const register: Register = (on, options) => {
       // Where a band is drawn (terminal, desktop) the list waits above the prompt for a number.
       const drawn = (await $.session.surface()) !== null
       if (!list.length || !drawn) return { text: listText(list, await $.clock.now(), lang, MARKER) }
+      if (e.presentation.columns < WIDE) {
+        const d = await askPick($, list)
+        if (!d) return { text: t.closed }
+        return { text: (await use($, d)) ? t.loaded(list.indexOf(d) + 1, d.title) : t.noBox }
+      }
       await $.ui.open({ id: PANE, title: t.picker })
       await update($, isPicking, () => true)
       return { text: t.opened(Math.min(list.length, SHOWN)) }

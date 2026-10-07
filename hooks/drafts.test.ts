@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { add, ago, listText, marked, project, text, title } from './drafts'
+import { add, ago, askPage, listText, marked, project, text, title } from './drafts'
 
 const d = (i: number, body = `t${i}`) => ({ id: `${i}`, title: body, text: body, savedAt: i, project: 'app' })
 
@@ -29,4 +29,15 @@ test('both languages read', () => {
   expect(listText([], 0, 'en', ';;')).toContain('End a prompt with ;;')
   expect(listText([d(1, 'fix the flaky test')], 60000, 'en', ';;')).toBe(' 1  fix the flaky test  (app, 1m ago, 18 chars)')
   expect(Object.keys(text.en).sort()).toEqual(Object.keys(text.ko).sort())
+})
+
+test('the question dialog takes 2-4 options: a page of drafts, with a next option when more remain', () => {
+  const list = [1, 2, 3, 4, 5, 6, 7].map(i => d(i))
+  const p1 = askPage(list, 0)
+  expect(p1.labels).toEqual(['t1', 't2', 't3'])
+  expect(p1.hasMore).toBe(true)
+  const p3 = askPage(list, 6)
+  expect(p3.labels).toEqual(['t7'])
+  expect(askPage(list.slice(0, 4), 0).labels.length).toBe(4)
+  expect(askPage([d(1, 'same'), d(2, 'same')], 0).labels).toEqual(['same', '2. same'])
 })

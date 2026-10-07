@@ -27,14 +27,16 @@ Drafts  number keys  1: refactor the a…  2: write…  │ Press a number key o
 |---|---|
 | Save the prompt you are writing | End it with `;;` and press Enter. It is not sent. |
 | Save some text | `/draft <text>` |
-| Put a draft back in the prompt box | `/drafts` opens the drafts sidebar: press a number key or click a draft. `0` closes. Or `/drafts <n>` |
-| Save what is in the prompt box | Click **Save prompt box** in the sidebar |
+| Put a draft back in the prompt box | `/drafts`, then press a number. Or `/drafts <n>` |
+| Save what is in the prompt box | Click **Save prompt box** in the sidebar (wide terminals) |
 | Delete a draft | Click `×` in the sidebar, or `/drafts rm <n>` |
 
 - Drafts are shared by every Claude Code session on your machine, newest first, up to 50. Each shows the project it was saved in. The list shows the newest 9.
 - Putting a draft in a prompt box that already holds other text saves that text as a draft first, so nothing you typed is lost.
 - Saving the same text again moves it to the top instead of keeping two copies.
-- Number keys work right away: a row of numbered buttons waits above the prompt box (a bare digit in an empty prompt box presses it, as when Claude asks you a question). On a terminal too narrow for the sidebar, that row becomes the full list.
+- `/drafts` fits the terminal:
+  - **110 columns or wider**: a drafts sidebar (click a draft, `×` to delete, **Save prompt box**) and a row of numbered buttons above the prompt box, so number keys work right away (a bare digit in an empty prompt box presses it). `0` closes.
+  - **Narrower** (a phone, a split pane): Claude Code's own question dialog, the one Claude asks you questions in. Arrow keys or a number and Enter; four at a time, the last option turning the page.
 - The sidebar and the row close when you pick a draft, press `0`, close the sidebar, or send a prompt.
 
 ## Install
@@ -67,7 +69,7 @@ claude --plugin-dir ./prompt-drafts
 - `$.prompt.read`, `$.prompt.fill`: read and fill the prompt box
 - `$.store.get`, `$.store.set`: keep drafts in the plugin's own store on your machine
 - `$.session.root`: the project name shown next to each draft
-- `$.command.register`, `$.ui.open`, `$.ui.close`, `$.ui.panes`, `$.ui.toast`, `$.clock.now`, `$.session.surface`, state for the sidebar and the number row
+- `$.command.register`, `$.ui.ask` (the question dialog), `$.ui.open`, `$.ui.close`, `$.ui.panes`, `$.ui.toast`, `$.clock.now`, `$.session.surface`, state for the sidebar and the number row
 
 No network requests, no processes, no files outside the plugin store. Only prompts you type yourself are checked for the marker; prompts that other plugins or sessions submit pass through untouched.
 

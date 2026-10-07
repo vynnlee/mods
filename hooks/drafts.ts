@@ -53,6 +53,9 @@ export const text = {
     paneHint: 'Press a number key or click a draft to put it in the prompt box.',
     saveButton: 'Save prompt box',
     close: 'close',
+    ask: 'Which draft?',
+    closed: 'Closed.',
+    more: (n: number) => `Next ${n} ▸`,
     opened: (n: number) => `${n} drafts above the prompt: press a number to use one, 0 to close.`,
     meta: (p: string, a: string, n: number) => `${p}, ${a}, ${n} chars`,
     cmdDraft: (m: string) => `Save a prompt as a draft: /draft <text>, or end any prompt with ${m}`,
@@ -76,12 +79,29 @@ export const text = {
     paneHint: '번호 키를 누르거나 클릭하면 입력창에 꺼냅니다.',
     saveButton: '입력창 저장',
     close: '닫기',
+    ask: '어떤 임시저장을 꺼낼까요?',
+    closed: '닫았습니다.',
+    more: (n: number) => `다음 ${n}개 ▸`,
     opened: (n: number) => `입력창 위에 임시저장 ${n}개: 번호를 누르면 꺼내고, 0은 닫기.`,
     meta: (p: string, a: string, n: number) => `${p}, ${a}, ${n}자`,
     cmdDraft: (m: string) => `프롬프트 임시저장: /draft <내용>, 또는 프롬프트 끝에 ${m}`,
     cmdDrafts: '임시저장 목록: 번호로 골라 꺼내기, /drafts <번호>, /drafts rm <번호> 로 지우기',
   },
 } satisfies Record<Lang, Record<string, unknown>>
+
+// One page of the native question dialog (2-4 options): up to 4 drafts, or 3 and a "next" option.
+// Labels must differ, so a repeated title gets its number.
+export function askPage(list: readonly Draft[], start: number) {
+  const rest = list.slice(start)
+  const page = rest.length <= 4 ? rest : rest.slice(0, 3)
+  const seen = new Set<string>()
+  const labels = page.map((d, i) => {
+    const label = seen.has(d.title) || !d.title ? `${start + i + 1}. ${d.title}` : d.title
+    seen.add(label)
+    return label
+  })
+  return { page, labels, hasMore: rest.length > page.length, next: start + page.length }
+}
 
 export function listText(list: readonly Draft[], now: number, lang: Lang, marker: string) {
   const t = text[lang]
