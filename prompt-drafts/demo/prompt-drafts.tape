@@ -1,7 +1,6 @@
 # Record: save two prompts with ;;, open /drafts, press 2 to bring one back.
 Output demo/out/prompt-drafts.gif
 Output demo/out/prompt-drafts.mp4
-Output demo/out/frames/
 
 Require claude
 

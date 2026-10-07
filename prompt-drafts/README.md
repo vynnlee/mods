@@ -99,11 +99,7 @@ claude plugin test .
 claude --plugin-dir .
 ```
 
-The demo GIF is recorded with [VHS](https://github.com/charmbracelet/vhs) from `demo/prompt-drafts.tape`. `demo/run.sh` starts Claude Code in a throwaway config with only this mod loaded, so no login or model call is needed:
-
-```bash
-vhs demo/prompt-drafts.tape   # writes demo/out/
-```
+The demo GIF is recorded with [VHS](https://github.com/charmbracelet/vhs) from `demo/prompt-drafts.tape`. `demo/run.sh` starts Claude Code in a throwaway config with only this mod loaded, so no login or model call is needed.
 
 The pure logic (titles, previews, paging, messages) is in `hooks/drafts.ts` and tested in `hooks/drafts.test.ts`. The hooks are in `hooks/register.tsx`. Every release raises `version` in `.claude-plugin/plugin.json`, since installed copies only update when it changes. Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
