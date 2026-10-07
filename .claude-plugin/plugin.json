@@ -1,10 +1,13 @@
 {
   "name": "prompt-drafts",
   "version": "0.1.0",
-  "description": "Keep prompts aside as drafts and bring them back later: end a prompt with ;; to save it, /drafts to pick one.",
+  "description": "Keep prompts aside as drafts of the session. End a prompt with ;; to save it instead of sending it, then /drafts to put one back in the prompt box.",
   "author": {
-    "name": "Seongbeen Lee"
+    "name": "Seongbeen Lee",
+    "url": "https://github.com/vynnlee"
   },
+  "homepage": "https://github.com/vynnlee/prompt-drafts",
+  "repository": "https://github.com/vynnlee/prompt-drafts",
   "license": "MIT",
   "keywords": [
     "claude-code-mod",

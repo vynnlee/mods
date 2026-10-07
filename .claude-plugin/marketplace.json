@@ -1,6 +1,18 @@
 {
   "name": "prompt-drafts",
-  "owner": { "name": "Seongbeen Lee" },
-  "description": "prompt-drafts, a Claude Code mod",
-  "plugins": [{ "name": "prompt-drafts", "source": "./", "description": "Keep prompts aside as drafts and bring them back later." }]
+  "owner": {
+    "name": "Seongbeen Lee",
+    "url": "https://github.com/vynnlee"
+  },
+  "description": "Keep prompts aside as drafts of the session and bring them back later.",
+  "plugins": [
+    {
+      "name": "prompt-drafts",
+      "source": "./",
+      "description": "End a prompt with ;; to keep it as a draft, /drafts to put it back in the prompt box.",
+      "homepage": "https://github.com/vynnlee/prompt-drafts",
+      "repository": "https://github.com/vynnlee/prompt-drafts",
+      "license": "MIT"
+    }
+  ]
 }

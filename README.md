@@ -1,12 +1,16 @@
 # prompt-drafts
 
-A [Claude Code mod](https://code.claude.com/docs/en/plugins/mods/overview) for keeping prompts aside and bringing them back later.
+[![check](https://github.com/vynnlee/prompt-drafts/actions/workflows/check.yml/badge.svg)](https://github.com/vynnlee/prompt-drafts/actions/workflows/check.yml)
+[![Claude Code 2.1.287+](https://img.shields.io/badge/Claude%20Code-2.1.287%2B-d97757)](https://code.claude.com/docs/en/plugins/mods/overview)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-You are halfway through a prompt and want to ask something else first. End it with `;;`, press Enter, and it is saved instead of sent. When you want it back, `/drafts` opens your drafts in a sidebar and one number key puts a draft back.
+A [Claude Code mod](https://code.claude.com/docs/en/plugins/mods/overview) that keeps prompts aside as drafts and puts them back in the prompt box when you need them.
+
+End a prompt with `;;` and press Enter. It is saved, not sent. Type `/drafts` and press a number to bring it back.
 
 ```
 ❯ refactor the auth middleware to use the new session store;;
-⏺ ✓ Draft 1 saved: refactor the auth middleware to use the new session store   (/drafts to bring it back)
+  ⎿ ✓ Saved as a draft (1 in this session): refactor the auth middleware to use the new session store
 ```
 
 ```
@@ -22,67 +26,96 @@ Drafts  number keys  1: refactor the a…  2: write…  │ Click a draft or pre
                                                     │    2h ago, 48 chars  ×
 ```
 
-## Use
+## Install
+
+Requires Claude Code 2.1.287 or later. Mods are on by default.
+
+```bash
+claude plugin marketplace add vynnlee/prompt-drafts
+claude plugin install prompt-drafts@prompt-drafts
+```
+
+Or in a Claude Code session:
+
+```
+/plugin install prompt-drafts --marketplace vynnlee/prompt-drafts
+```
+
+To try it for one session without installing:
+
+```bash
+git clone https://github.com/vynnlee/prompt-drafts
+claude --plugin-dir ./prompt-drafts
+```
+
+## Usage
 
 | To | Do |
 |---|---|
 | Save the prompt you are writing | End it with `;;` and press Enter. It is not sent. |
 | Save some text | `/draft <text>` |
-| Put a draft back in the prompt box | `/drafts`, then press a number. Or `/drafts <n>` |
-| Save what is in the prompt box | Click **Save prompt box** in the sidebar (wide terminals) |
-| Delete a draft | Click `×` in the sidebar, or `/drafts rm <n>` |
-| Bring back the draft you just deleted | Click **Undo** in the sidebar, or `/drafts undo` |
+| Put a draft back in the prompt box | `/drafts`, then press its number. Or `/drafts <n>` |
+| Save what is in the prompt box | **Save prompt box** in the sidebar |
+| Delete a draft | `×` in the sidebar, or `/drafts rm <n>` |
+| Bring back the draft you just deleted | **Undo** in the sidebar, or `/drafts undo` |
 
-- Drafts belong to the session you save them in: another session never sees them, and resuming the session brings them back. Newest first, up to 50 per session; the drafts of a session left alone for 30 days are dropped.
-- The sidebar shows up to three lines of each draft, so a long prompt is easy to recognise.
-- Putting a draft in a prompt box that already holds other text saves that text as a draft first, so nothing you typed is lost.
-- Saving the same text again moves it to the top instead of keeping two copies.
-- `/drafts` fits the terminal:
-  - **110 columns or wider**: a drafts sidebar (click a draft, `×` to delete, **Save prompt box**) and a row of numbered buttons above the prompt box, so number keys work right away (a bare digit in an empty prompt box presses it). `0` closes.
-  - **Narrower** (a phone, a split pane): Claude Code's own question dialog, the one Claude asks you questions in. Arrow keys or a number and Enter; four at a time, the last option turning the page.
-- The sidebar and the row close when you pick a draft, press `0`, close the sidebar, or send a prompt.
+### What `/drafts` shows
 
-## Install
+- **110 columns or wider:** a sidebar with every draft and a numbered row above the prompt box. Press a number in the empty prompt box to use that draft, or `0` to close. You can also click a draft in the sidebar.
+- **Narrower** (a phone, a split pane): Claude Code's own question dialog. Use the arrow keys or a number, then Enter. It lists four drafts at a time, and the last option shows the next page.
+- **No prompt box** (headless runs): a plain numbered list.
 
-Claude Code 2.1.287 or later (mods are on by default). In a Claude Code session:
+### How drafts are kept
 
-```
-/plugin install prompt-drafts --marketplace <owner>/prompt-drafts
-```
-
-Or try it for one session from a clone:
-
-```bash
-git clone https://github.com/<owner>/prompt-drafts
-claude --plugin-dir ./prompt-drafts
-```
+- Drafts belong to the session they were saved in. Other sessions do not see them, and resuming the session brings them back.
+- Newest first, up to 50 per session. Saving the same text again moves it to the top.
+- If the prompt box already holds other text when you put a draft in, that text is saved as a draft first.
+- The sidebar shows the first three lines of each draft.
+- Drafts of a session with no new draft for 30 days are removed.
 
 ## Settings
 
-`/plugin configure prompt-drafts@prompt-drafts`
+```
+/plugin configure prompt-drafts@prompt-drafts
+```
 
-| Setting | Default | |
+| Setting | Default | Values |
 |---|---|---|
-| `language` | `en` | `en` or `ko` (Korean) for every message and the list |
+| `language` | `en` | `en`, `ko` (Korean) |
+
+## Update
+
+```bash
+claude plugin update prompt-drafts@prompt-drafts
+```
+
+Third party marketplaces do not update on their own unless you turn on auto update in `/plugin` under Marketplaces.
 
 ## What it touches
 
-`claude plugin validate .` lists everything the mod calls:
+`claude plugin validate .` reports every hook and call. In short:
 
-- `$.prompt.read`, `$.prompt.fill`: read and fill the prompt box
-- `$.store.get`, `$.store.set`, `$.store.delete`, `$.store.keys`: keep each session's drafts in the plugin's own store on your machine, and drop sessions idle for 30 days
-- `$.session.id`: which session the drafts belong to
-- `$.command.register`, `$.ui.ask` (the question dialog), `$.ui.open`, `$.ui.close`, `$.ui.panes`, `$.ui.toast`, `$.clock.now`, `$.session.surface`, state for the sidebar and the number row
+| | |
+|---|---|
+| Hooks | `session.start`, `prompt.submit`, `command.run` (`draft`, `drafts`), `ui.close`, `ui.render` (`AbovePrompt`, `Pane`) |
+| Prompt box | `$.prompt.read`, `$.prompt.fill` |
+| Storage | `$.store.get`, `$.store.set`, `$.store.delete`, `$.store.keys` (the plugin's own store on your machine) |
+| Session | `$.session.id` (which session a draft belongs to), `$.session.surface` |
+| Interface | `$.command.register`, `$.ui.ask`, `$.ui.open`, `$.ui.close`, `$.ui.panes`, `$.ui.toast`, `$.ui.resolve`, `$.state.get`, `$.state.set`, `$.clock.now` |
 
-No network requests, no processes, no files outside the plugin store. Only prompts you type yourself are checked for the marker; prompts that other plugins or sessions submit pass through untouched.
+- No network requests, no processes, no files outside the plugin store.
+- Only prompts you type are checked for `;;`. Prompts submitted by other plugins or sessions pass through unchanged.
 
-## Develop
+## Development
 
 ```bash
-claude plugin validate .   # what the mod hooks and calls
-claude plugin test .       # hooks/drafts.test.ts
+claude plugin validate . --strict
+claude plugin test .
+claude --plugin-dir .
 ```
+
+The pure logic (titles, previews, paging, messages) is in `hooks/drafts.ts` and tested in `hooks/drafts.test.ts`. The hooks are in `hooks/register.tsx`. Every release raises `version` in `.claude-plugin/plugin.json`, since installed copies only update when it changes. Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)
