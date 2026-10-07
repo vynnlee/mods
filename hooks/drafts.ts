@@ -2,13 +2,15 @@
 import type { Draft } from '../types'
 
 export const MAX = 50
+// A prompt that ends with this is saved as a draft instead of sent.
+export const MARKER = ';;'
 export type Lang = 'en' | 'ko'
 
 // The text before the marker when the prompt ends with it, else null.
-export function marked(text: string, marker: string) {
+export function marked(text: string) {
   const t = text.trimEnd()
-  if (!marker || !t.endsWith(marker)) return null
-  return t.slice(0, -marker.length).trimEnd()
+  if (!t.endsWith(MARKER)) return null
+  return t.slice(0, -MARKER.length).trimEnd()
 }
 
 export function title(text: string) {

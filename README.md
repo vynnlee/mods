@@ -60,7 +60,6 @@ claude --plugin-dir ./prompt-drafts
 | Setting | Default | |
 |---|---|---|
 | `language` | `en` | `en` or `ko` (Korean) for every message and the pane |
-| `marker` | `;;` | A prompt that ends with this is saved instead of sent |
 
 ## What it touches
 

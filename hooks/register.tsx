@@ -1,5 +1,5 @@
 // prompt-drafts: keep prompts aside as drafts and bring them back later.
-//   Save:  end a prompt with the marker (";;" by default) and press Enter: it is saved, not sent.
+//   Save:  end a prompt with ";;" and press Enter: it is saved, not sent.
 //          Or "/draft <text>", or press "s" in the drafts pane to save what is in the prompt box.
 //   Use:   "/drafts" opens the pane: 1-9 (or a click) puts a draft in the prompt box, × deletes one.
 //          "/drafts <n>" puts draft n in the prompt box; "/drafts rm <n>" deletes it.
@@ -8,14 +8,14 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 import type { Draft } from '../types'
-import { add, ago, listText, marked, project, text, title, type Lang } from './drafts'
+import { add, ago, listText, MARKER, marked, project, text, title, type Lang } from './drafts'
 
 const PANE = 'prompt-drafts'
 const KEY = 'drafts'
 const drafts = atom({ plugin: 'prompt-drafts', key: 'drafts' } as const, [])
 
 let lang: Lang = 'en'
-let marker = ';;'
+const marker = MARKER
 
 async function load($: EngineInterface) {
   const list = ((await $.store.get(KEY)) as Draft[] | undefined) ?? []
@@ -42,7 +42,7 @@ async function remove($: EngineInterface, id: string) {
 // Put a draft in the prompt box, keeping any other text that was there as a draft first.
 async function use($: EngineInterface, d: Draft) {
   const box = await $.prompt.read()
-  if (box.text.trim() && box.text.trim() !== d.text.trim() && marked(box.text, marker) === null) {
+  if (box.text.trim() && box.text.trim() !== d.text.trim() && marked(box.text) === null) {
     await save($, box.text)
     $.ui.toast(text[lang].stashed)
   }
@@ -60,7 +60,6 @@ async function saveBox($: EngineInterface) {
 
 export const register: Register = (on, options) => {
   lang = options.language === 'ko' ? 'ko' : 'en'
-  marker = typeof options.marker === 'string' && options.marker.trim() ? options.marker.trim() : ';;'
   const t = text[lang]
 
   on('session.start', async ($, e, next) => {
@@ -73,7 +72,7 @@ export const register: Register = (on, options) => {
   // A typed prompt ending with the marker is saved and not sent.
   on('prompt.submit', async ($, e, next) => {
     if (e.origin && e.origin.kind !== 'composer') return next(e)
-    const body = marked(e.text, marker)
+    const body = marked(e.text)
     if (body === null) return next(e)
     if (!body) return { drop: t.empty }
     await save($, body)

@@ -4,11 +4,10 @@ import { add, ago, listText, marked, project, text, title } from './drafts'
 const d = (i: number, body = `t${i}`) => ({ id: `${i}`, title: body, text: body, savedAt: i, project: 'app' })
 
 test('the marker at the end saves, anywhere else it does not', () => {
-  expect(marked('write the release notes ;;', ';;')).toBe('write the release notes')
-  expect(marked('two lines\nof prompt;;  ', ';;')).toBe('two lines\nof prompt')
-  expect(marked('a;; in the middle', ';;')).toBe(null)
-  expect(marked(';;', ';;')).toBe('')
-  expect(marked('custom marker //save', '//save')).toBe('custom marker')
+  expect(marked('write the release notes ;;')).toBe('write the release notes')
+  expect(marked('two lines\nof prompt;;  ')).toBe('two lines\nof prompt')
+  expect(marked('a;; in the middle')).toBe(null)
+  expect(marked(';;')).toBe('')
 })
 
 test('title is the first non-empty line, cut at 48', () => {
