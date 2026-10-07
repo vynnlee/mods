@@ -1,8 +1,8 @@
 // prompt-drafts: keep prompts aside as drafts and bring them back later.
-//   Save:  end a prompt with ";;" and press Enter: it is saved, not sent.
-//          Or "/draft <text>", or press "s" in the drafts pane to save what is in the prompt box.
-//   Use:   "/drafts" opens the pane: 1-9 (or a click) puts a draft in the prompt box, × deletes one.
-//          "/drafts <n>" puts draft n in the prompt box; "/drafts rm <n>" deletes it.
+//   Save:  end a prompt with ";;" and press Enter: it is saved, not sent. Or "/draft <text>".
+//   Use:   "/drafts" lists your drafts right above the prompt box; press a number to put that draft in the box
+//          (a bare digit in an empty prompt box presses a button of that band), 0 to close the list.
+//          "/drafts <n>" does the same without the list; "/drafts rm <n>" deletes draft n.
 // Drafts live in this plugin's store on this machine, shared by every session, newest first, 50 at most.
 // Putting a draft in a prompt box that already holds text keeps that text as a draft first, so nothing is lost.
 import { atom, read, update } from 'claude-code'
@@ -10,12 +10,12 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { Draft } from '../types'
 import { add, ago, listText, MARKER, marked, project, text, title, type Lang } from './drafts'
 
-const PANE = 'prompt-drafts'
 const KEY = 'drafts'
+const SHOWN = 9
 const drafts = atom({ plugin: 'prompt-drafts', key: 'drafts' } as const, [])
+const isPicking = atom({ plugin: 'prompt-drafts', key: 'isPicking' } as const, false)
 
 let lang: Lang = 'en'
-const marker = MARKER
 
 async function load($: EngineInterface) {
   const list = ((await $.store.get(KEY)) as Draft[] | undefined) ?? []
@@ -50,12 +50,13 @@ async function use($: EngineInterface, d: Draft) {
   return done.isFilled
 }
 
-async function saveBox($: EngineInterface) {
-  const { text: body } = await $.prompt.read()
-  if (!body.trim()) return $.ui.toast(text[lang].empty)
-  const d = await save($, body)
-  await $.prompt.fill({ text: '', mode: 'replace' })
-  $.ui.toast(text[lang].saved(1, d.title))
+async function pick($: EngineInterface, d: Draft) {
+  await update($, isPicking, () => false)
+  await use($, d)
+}
+
+async function closePicker($: EngineInterface) {
+  await update($, isPicking, () => false)
 }
 
 export const register: Register = (on, options) => {
@@ -63,15 +64,16 @@ export const register: Register = (on, options) => {
   const t = text[lang]
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'draft', description: t.cmdDraft(marker), argumentHint: '<text>' })
+    await $.command.register({ name: 'draft', description: t.cmdDraft(MARKER), argumentHint: '<text>' })
     await $.command.register({ name: 'drafts', description: t.cmdDrafts, argumentHint: '[n | rm n]' })
     void load($)
     return next(e)
   })
 
-  // A typed prompt ending with the marker is saved and not sent.
+  // A typed prompt ending with ";;" is saved and not sent. Any prompt also closes the list.
   on('prompt.submit', async ($, e, next) => {
     if (e.origin && e.origin.kind !== 'composer') return next(e)
+    await update($, isPicking, () => false)
     const body = marked(e.text)
     if (body === null) return next(e)
     if (!body) return { drop: t.empty }
@@ -81,7 +83,7 @@ export const register: Register = (on, options) => {
 
   on('command.run', { command: 'draft' }, async ($, e) => {
     const body = e.args.trim()
-    if (!body) return { text: t.draftUsage(marker) }
+    if (!body) return { text: t.draftUsage(MARKER) }
     const d = await save($, body)
     return { text: t.saved(1, d.title) }
   })
@@ -91,8 +93,11 @@ export const register: Register = (on, options) => {
     const args = e.args.trim()
     const nth = (s: string) => list[Number(s) - 1]
     if (!args) {
-      await $.ui.open({ id: PANE, title: t.pane })
-      return { text: listText(list, await $.clock.now(), lang, marker) }
+      // Where a band is drawn (terminal, desktop) the list waits above the prompt for a number.
+      const drawn = (await $.session.surface()) !== null
+      if (!list.length || !drawn) return { text: listText(list, await $.clock.now(), lang, MARKER) }
+      await update($, isPicking, () => true)
+      return { text: t.opened(Math.min(list.length, SHOWN)) }
     }
     const rm = args.match(/^rm\s+(\d+)$/)
     if (rm) {
@@ -109,34 +114,26 @@ export const register: Register = (on, options) => {
     return { text: t.usage }
   })
 
-  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+  // The list, above the prompt. Each Button's hotkey is its number; 0 closes.
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    if (e.props.hasSurvey || !(await read($, isPicking))) return next(e)
+    const list = (await read($, drafts)).slice(0, SHOWN)
+    if (!list.length) return next(e)
     const { Box, Text, Button } = $.ui.resolve(e)
-    const list = await read($, drafts)
     const now = await $.clock.now()
-    const room = Math.max(1, Math.floor(((e.viewport?.rows ?? 24) - 4) / 2))
     return (
       <Box flexDirection="column">
         <Box>
-          <Button key="save" label={t.saveButton} hotkey="s" onPress={() => saveBox($)} />
+          <Text bold>{t.picker}</Text>
+          <Text dimColor>  {t.pickHint}</Text>
         </Box>
-        <Text dimColor>{t.paneHint(marker)}</Text>
-        <Text> </Text>
-        {list.length === 0 && <Text dimColor>{t.none(marker)}</Text>}
-        {list.slice(0, room).map((d, i) => (
-          <Box flexDirection="column" key={d.id}>
-            <Button
-              key={`use-${d.id}`}
-              label={i < 9 ? d.title : `${i + 1}  ${d.title}`}
-              hotkey={i < 9 ? String(i + 1) : undefined}
-              plain
-              onPress={() => use($, d)}
-            />
-            <Box>
-              <Text dimColor>   {t.meta(d.project, ago(now, d.savedAt, lang), d.text.length)}  </Text>
-              <Button key={`rm-${d.id}`} label="×" plain onPress={() => remove($, d.id)} />
-            </Box>
+        {list.map((d, i) => (
+          <Box key={d.id}>
+            <Button key={`use-${d.id}`} label={d.title} hotkey={String(i + 1)} plain onPress={() => pick($, d)} />
+            <Text dimColor>   {t.meta(d.project, ago(now, d.savedAt, lang), d.text.length)}</Text>
           </Box>
         ))}
+        <Button key="close" label={t.close} hotkey="0" plain onPress={() => closePicker($)} />
       </Box>
     )
   })

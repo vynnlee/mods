@@ -2,6 +2,6 @@ export type Draft = { id: string; title: string; text: string; savedAt: number; 
 
 declare module 'claude-code' {
   interface PluginState {
-    'prompt-drafts': { drafts: Draft[] }
+    'prompt-drafts': { drafts: Draft[]; isPicking: boolean }
   }
 }
