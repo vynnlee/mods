@@ -8,23 +8,7 @@ A [Claude Code mod](https://code.claude.com/docs/en/plugins/mods/overview) that 
 
 End a prompt with `;;` and press Enter. It is saved, not sent. Type `/drafts` and press a number to bring it back.
 
-```
-❯ refactor the auth middleware to use the new session store;;
-  ⎿ ✓ Saved as a draft (1 in this session): refactor the auth middleware to use the new session store
-```
-
-```
-❯ /drafts                                           │ Drafts                          ✕
-                                                    │ [ Save prompt box ]
-Drafts  number keys  1: refactor the a…  2: write…  │ Click a draft or press its
-0: close                                            │ number to put it in the prompt.
-────────────────────────────────────────────────    │
-❯                                                   │ 1  refactor the auth middleware…
-                                                    │    keep the old cookie name for…
-                                                    │    3m ago, 61 chars  ×
-                                                    │ 2  write release notes for 2.4
-                                                    │    2h ago, 48 chars  ×
-```
+![prompt-drafts: save two prompts with ;;, open /drafts, press 2 to bring one back](docs/demo.gif)
 
 ## Install
 
@@ -113,6 +97,12 @@ cd prompt-drafts
 claude plugin validate . --strict
 claude plugin test .
 claude --plugin-dir .
+```
+
+The demo GIF is recorded with [VHS](https://github.com/charmbracelet/vhs) from `demo/prompt-drafts.tape`. `demo/run.sh` starts Claude Code in a throwaway config with only this mod loaded, so no login or model call is needed:
+
+```bash
+vhs demo/prompt-drafts.tape   # writes demo/out/
 ```
 
 The pure logic (titles, previews, paging, messages) is in `hooks/drafts.ts` and tested in `hooks/drafts.test.ts`. The hooks are in `hooks/register.tsx`. Every release raises `version` in `.claude-plugin/plugin.json`, since installed copies only update when it changes. Changes are listed in [CHANGELOG.md](CHANGELOG.md).
