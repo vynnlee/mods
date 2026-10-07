@@ -11,6 +11,7 @@ import type { Draft } from '../types'
 import { add, ago, listText, MARKER, marked, project, text, title, type Lang } from './drafts'
 
 const KEY = 'drafts'
+const PANE = 'prompt-drafts'
 const SHOWN = 9
 const drafts = atom({ plugin: 'prompt-drafts', key: 'drafts' } as const, [])
 const isPicking = atom({ plugin: 'prompt-drafts', key: 'isPicking' } as const, false)
@@ -50,13 +51,28 @@ async function use($: EngineInterface, d: Draft) {
   return done.isFilled
 }
 
+// Picking puts the draft in the prompt box and closes both the sidebar and the number row.
 async function pick($: EngineInterface, d: Draft) {
-  await update($, isPicking, () => false)
+  await closePicker($)
   await use($, d)
 }
 
 async function closePicker($: EngineInterface) {
   await update($, isPicking, () => false)
+  if ((await $.ui.panes()).some(p => p.id === PANE)) await $.ui.close({ id: PANE })
+}
+
+async function saveBox($: EngineInterface) {
+  const { text: body } = await $.prompt.read()
+  if (!body.trim()) return $.ui.toast(text[lang].empty)
+  await save($, body)
+  await $.prompt.fill({ text: '', mode: 'replace' })
+  $.ui.toast(text[lang].saved(1, title(body)))
+}
+
+// The sidebar shows when it has room; the number row above the prompt is what the keys reach either way.
+async function paneShown($: EngineInterface) {
+  return (await $.ui.panes()).some(p => p.id === PANE && p.isPlaced && p.isShown)
 }
 
 export const register: Register = (on, options) => {
@@ -96,6 +112,7 @@ export const register: Register = (on, options) => {
       // Where a band is drawn (terminal, desktop) the list waits above the prompt for a number.
       const drawn = (await $.session.surface()) !== null
       if (!list.length || !drawn) return { text: listText(list, await $.clock.now(), lang, MARKER) }
+      await $.ui.open({ id: PANE, title: t.picker })
       await update($, isPicking, () => true)
       return { text: t.opened(Math.min(list.length, SHOWN)) }
     }
@@ -114,12 +131,31 @@ export const register: Register = (on, options) => {
     return { text: t.usage }
   })
 
-  // The list, above the prompt. Each Button's hotkey is its number; 0 closes.
+  // Closing the sidebar (its ×, or Escape) closes the number row too.
+  on('ui.close', { id: PANE }, async ($, e, next) => {
+    await update($, isPicking, () => false)
+    return next(e)
+  })
+
+  // Above the prompt: a bare digit in an empty prompt box presses one of these buttons. With the sidebar shown it is
+  // one row of numbers; without it (a narrow terminal) it is the whole list.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey || !(await read($, isPicking))) return next(e)
     const list = (await read($, drafts)).slice(0, SHOWN)
     if (!list.length) return next(e)
     const { Box, Text, Button } = $.ui.resolve(e)
+    if (await paneShown($)) {
+      return (
+        <Box>
+          <Text bold>{t.picker}</Text>
+          <Text dimColor>  {t.keysHint}  </Text>
+          {list.map((d, i) => (
+            <Button key={`use-${d.id}`} label={`${d.title.slice(0, 12)}${d.title.length > 12 ? '…' : ''}  `} hotkey={String(i + 1)} plain onPress={() => pick($, d)} />
+          ))}
+          <Button key="close" label={t.close} hotkey="0" plain onPress={() => closePicker($)} />
+        </Box>
+      )
+    }
     const now = await $.clock.now()
     return (
       <Box flexDirection="column">
@@ -134,6 +170,31 @@ export const register: Register = (on, options) => {
           </Box>
         ))}
         <Button key="close" label={t.close} hotkey="0" plain onPress={() => closePicker($)} />
+      </Box>
+    )
+  })
+
+  // The sidebar: every draft, click to use one, × to delete, and a button that saves what is in the prompt box.
+  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+    const { Box, Text, Button } = $.ui.resolve(e)
+    const list = await read($, drafts)
+    const now = await $.clock.now()
+    const room = Math.max(1, Math.floor(((e.viewport?.rows ?? 24) - 5) / 2))
+    return (
+      <Box flexDirection="column">
+        <Button key="save" label={t.saveButton} onPress={() => saveBox($)} />
+        <Text dimColor>{t.paneHint}</Text>
+        <Text> </Text>
+        {list.length === 0 && <Text dimColor>{t.none(MARKER)}</Text>}
+        {list.slice(0, room).map((d, i) => (
+          <Box flexDirection="column" key={d.id}>
+            <Button key={`pane-${d.id}`} label={`${i + 1}  ${d.title}`} plain onPress={() => pick($, d)} />
+            <Box>
+              <Text dimColor>   {t.meta(d.project, ago(now, d.savedAt, lang), d.text.length)}  </Text>
+              <Button key={`rm-${d.id}`} label="×" plain onPress={() => remove($, d.id)} />
+            </Box>
+          </Box>
+        ))}
       </Box>
     )
   })
